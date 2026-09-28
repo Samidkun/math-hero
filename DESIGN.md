@@ -76,6 +76,24 @@ Kenapa ini signature, dan kenapa bukan slop: timer adalah **sumber tekanan utama
 
 Motion budget: cincin = animasi 1 fps tick (bukan smooth), karena "tick" itu feedback. Opsi jawaban: scale 1.02 + border color saat hover, 150ms ease-out. Tidak ada bounce/elastic. `prefers-reduced-motion`: cincin jadi angka statis.
 
+## Responsive contract — "phone dulu, scale-up"
+
+Anak SD mainnya di HP ortu. Phone = layout dasar yang harus sempurna; tablet/laptop = bonus yang harus gak kelihatan terlantar.
+
+**Breakpoints (mobile-first, min-width):**
+- `<640px` — HP: 1 kolom, padding 16px, target sentuh minimal 44px (jarak tempuh ibu jari)
+- `640-1024px` — tablet: container cap 640px, list bisa 2 kolom (roster, level progress), bar chart tetap 1 kolom
+- `>1024px` — laptop: container cap 880-1080px tergantung layar, 2-3 kolom untuk roster/report, sidebar detail untuk map
+
+**Aturan wajib:**
+- `100dvh` BUKAN `100vh` (viewport unit lama mengabaikan chrome browser mobile — tombol "Gas" bisa ketutup address bar saat scroll)
+- `env(safe-area-inset-bottom)` padding bawah (iPhone notch/Home indicator)
+- `touch-action: manipulation` pada semua target sentuh (hapus 300ms double-tap-zoom delay)
+- `user-select: none` pada tombol (anak nge-klik-doang sering mentriger seleksi teks)
+- Fluid type: `clamp()` untuk heading/soal — soal 28px di HP kecil, 32px di besar, bukan fix 28
+- Semua konten `max-width` capped di >640px; tidak ada yang full-width stretch di desktop kecuali background
+- `prefers-reduced-motion`: cincin jadi angka statis (sudah ada), tambah disable scale hover
+
 ## Knobs
 
 - `DESIGN_VARIANCE`: 6 (playful tapi terkendali; ini game anak, boleh sedikit lebih berani dari dashboard, tapi jangan sirkus)

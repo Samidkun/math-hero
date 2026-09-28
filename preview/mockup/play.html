@@ -21,39 +21,46 @@
     --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;background:var(--canvas);color:var(--ink);
+  body{margin:0;min-height:100dvh;background:var(--canvas);color:var(--ink);
     font-family:var(--font-body);font-size:16px;line-height:1.5;
     background-image:radial-gradient(var(--line) 1px,transparent 1px);
     background-size:28px 28px;background-position:0 0}
   /* ponytail: mockup-only state switcher; real app has no such bar.
      upgrade: delete when wired to real game state. */
   .toolbar{display:flex;gap:var(--s2);align-items:center;justify-content:center;
-    padding:var(--s4) var(--s4) 0;flex-wrap:wrap}
+    padding:var(--s4) var(--s4) 0;flex-wrap:wrap;position:relative;z-index:2}
   .toolbar-label{font-size:13px;font-weight:600;color:var(--ink-muted)}
   .tbtn{font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);
-    border:1px solid var(--line);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer}
+    border:1px solid var(--line);border-radius:var(--r-pill);min-height:44px;
+    padding:6px 14px;touch-action:manipulation;cursor:pointer}
   .tbtn:hover{border-color:var(--focus)}
   .tbtn[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .wrap{width:100%;max-width:720px;margin-inline:auto;padding:var(--s5) var(--s4) var(--s7)}
+  .wrap{width:100%;max-width:720px;margin-inline:auto;
+    padding:var(--s5) var(--s4) calc(var(--s7) + env(safe-area-inset-bottom,0px))}
   .meta{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);
     padding:0 var(--s2) var(--s4)}
   .label{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)}
   .meta-num{font-family:var(--font-display);font-weight:600;color:var(--ink-muted);font-variant-numeric:tabular-nums}
   .card{position:relative;background:var(--surface);border-radius:var(--r-lg);
     box-shadow:var(--sh-2);padding:var(--s6)}
-  .timer{position:absolute;top:var(--s5);right:var(--s6);width:64px;height:64px}
-  .timer svg{display:block}
+  .timer{position:absolute;top:var(--s5);right:var(--s6);width:clamp(48px,15vw,64px);aspect-ratio:1}
+  .timer svg{display:block;width:100%;height:100%}
   .track{fill:none;stroke:var(--line);stroke-width:6}
   .ring{fill:none;stroke:var(--focus);stroke-width:6;stroke-linecap:round}
   .timer-num{position:absolute;inset:0;display:grid;place-items:center;
-    font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--ink);
+    font-family:var(--font-display);font-weight:700;
+    font-size:clamp(15px,4.7vw,20px);color:var(--ink);
     font-variant-numeric:tabular-nums}
-  .stem{position:relative;z-index:1;margin:var(--s3) 84px var(--s6) 0;
-    font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1.35}
+  .stem{position:relative;z-index:1;
+    margin:var(--s3) clamp(56px,20vw,84px) var(--s6) 0;
+    font-family:var(--font-display);font-weight:600;
+    font-size:clamp(28px,2.5vw + 22px,32px);line-height:1.35}
   .options{display:flex;flex-direction:column;gap:var(--s3)}
   .option{display:flex;align-items:center;gap:var(--s3);width:100%;text-align:left;
     background:var(--surface);border:2px solid var(--line);border-radius:var(--r-md);
-    padding:var(--s4) var(--s5);font-family:var(--font-body);font-size:16px;color:var(--ink);
+    min-height:44px;padding:var(--s4) var(--s5);
+    font-family:var(--font-body);font-size:16px;color:var(--ink);
+    -webkit-user-select:none;user-select:none;touch-action:manipulation;
     cursor:pointer;transition:transform 150ms ease-out,border-color 150ms ease-out}
   .option:hover:not(:disabled){transform:scale(1.02);border-color:var(--focus)}
   .option:disabled{cursor:not-allowed;border-color:var(--locked);color:var(--ink-muted)}
@@ -74,7 +81,8 @@
   .feedback-danger{background:rgba(198,40,40,0.06);border-left-color:var(--danger)}
   .actions{margin-top:var(--s5)}
   .btn-hero{background:var(--hero);color:var(--hero-ink);border:0;border-radius:var(--r-pill);
-    padding:12px 24px;font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer}
+    min-height:44px;padding:12px 24px;font-family:var(--font-body);font-size:16px;
+    font-weight:600;touch-action:manipulation;cursor:pointer}
   .btn-hero:hover{filter:brightness(0.94)}
   .errorbox{margin-top:var(--s5);padding:var(--s5);border-radius:var(--r-md);
     background:rgba(198,40,40,0.06);border-left:4px solid var(--danger)}

@@ -4,19 +4,50 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-  /* Math Hero tokens — DESIGN.md (petualangan alam) */
+  /* Math Hero tokens — DESIGN.md (petualangan alam). DESIGN.md is the source of truth. */
   --color-canvas: #F4F1E4;
   --color-surface: #FFFFFF;
   --color-surface-raised: #FCFAF1;
   --color-ink: #22301F;
-  --color-ink-soft: #5A6B57;
-  --color-leaf: #2F6B4F;
-  --color-leaf-deep: #1F4A37;
-  --color-gold: #C98A1E;
-  --color-danger: #B23A2E;
+  --color-ink-muted: #5A6B57;
+  --color-line: rgba(34, 48, 31, 0.12);
+  --color-hero: #2E7D32;
+  --color-success: #2E7D32;
+  --color-danger: #C62828;
+  --color-focus: #1565C0;
+  --color-locked: #B0AFA8;
+  --color-gold: #F9A825;
+  --color-accent-earth: #8D6E63;
 
   --font-display: 'Baloo 2', 'Nunito', ui-rounded, system-ui, sans-serif;
-  --font-sans: 'Nunito', ui-rounded, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Responsive contract — DESIGN.md "phone dulu, scale-up" */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

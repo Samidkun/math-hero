@@ -35,9 +35,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $player = null;
+        if ($playerId = $request->session()->get('player_id')) {
+            $player = \App\Models\Player::with(['classroom', 'progress.level'])->find($playerId);
+        }
+
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'player' => $player ? [
+                    'id' => $player->id,
+                    'nickname' => $player->nickname,
+                    'class_id' => $player->class_id,
+                    'class_code' => $player->classroom?->code,
+                    'class_name' => $player->classroom?->name,
+                    'total_stars' => $player->total_stars,
+                ] : null,
+            ],
+            'flash' => [
+                'message' => fn () => $request->session()->get('message'),
+            ],
         ];
     }
 }
