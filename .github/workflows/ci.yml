@@ -1,0 +1,167 @@
+name: CI
+on:
+  push: { branches: [main, master] }
+  pull_request:
+
+jobs:
+  # hashFiles() is NOT available in jobs.<job_id>.if — only in
+  # jobs.<job_id>.steps.*. Used at job level it makes the WHOLE workflow file
+  # invalid: GitHub rejects it at parse time and NO job ever runs (a dead CI
+  # file, one level above the dead gate local-ci.sh exists to fix). Detect
+  # stacks ONCE at step level and gate the stack jobs on needs.detect.outputs.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.check.outputs.node }}
+      node_dir: ${{ steps.check.outputs.node_dir }}
+      php: ${{ steps.check.outputs.php }}
+      php_dir: ${{ steps.check.outputs.php_dir }}
+      python: ${{ steps.check.outputs.python }}
+      e2e: ${{ steps.check.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect stacks
+        id: check
+        run: |
+          # Monorepo-aware: the node app may live in a subdirectory, and a
+          # root-only package.json check would silently skip the node job once it
+          # moves. Scan the conventional layouts; a package.json sitting next to a
+          # composer.json is the PHP app's Vite asset pipeline, not the node stack.
+          node_dir=""
+          for d in . frontend web apps/web builder; do
+            if [ -f "$d/package.json" ] && [ ! -f "$d/composer.json" ]; then node_dir="$d"; break; fi
+          done
+          if [ -n "$node_dir" ]; then
+            echo "node=true" >> "$GITHUB_OUTPUT"; echo "node_dir=$node_dir" >> "$GITHUB_OUTPUT"
+          else
+            echo "node=false" >> "$GITHUB_OUTPUT"; echo "node_dir=." >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f composer.json ]; then
+            echo "php=true" >> "$GITHUB_OUTPUT"; echo "php_dir=." >> "$GITHUB_OUTPUT"
+          elif [ -f backend/composer.json ]; then
+            echo "php=true" >> "$GITHUB_OUTPUT"; echo "php_dir=backend" >> "$GITHUB_OUTPUT"
+          else
+            echo "php=false" >> "$GITHUB_OUTPUT"; echo "php_dir=." >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f pyproject.toml ] || [ -f requirements.txt ]; then echo "python=true" >> "$GITHUB_OUTPUT"; else echo "python=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f playwright.config.ts ] || [ -f playwright.config.js ]; then echo "e2e=true" >> "$GITHUB_OUTPUT"; else echo "e2e=false" >> "$GITHUB_OUTPUT"; fi
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+
+  node:
+    needs: detect
+    if: needs.detect.outputs.node == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ needs.detect.outputs.node_dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - name: Install
+        run: npm ci || npm install
+      - name: Lint
+        run: npm run --if-present lint
+      - name: Typecheck
+        run: npm run --if-present typecheck
+      - name: Test
+        run: npm run --if-present test
+      - name: Dependency audit (high/critical fails the build)
+        run: |
+          if [ ! -f package-lock.json ] && [ ! -f npm-shrinkwrap.json ]; then
+            echo "::error::no lockfile — npm audit cannot run. Commit package-lock.json."
+            exit 1
+          fi
+          npm audit --audit-level=high
+      - name: License compliance (no GPL/AGPL in a shipped product)
+        run: npx --yes license-checker --production --failOn "GPL;AGPL"
+      - name: Build
+        run: npm run --if-present build
+
+  php:
+    needs: detect
+    if: needs.detect.outputs.php == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ needs.detect.outputs.php_dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', tools: composer, coverage: none }
+      - name: Install
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Test
+        run: |
+          if [ -f artisan ]; then php artisan test; else vendor/bin/phpunit; fi
+      - name: Dependency audit (known CVEs fail the build)
+        run: composer audit --no-interaction
+
+  python:
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install
+        run: |
+          if [ -f pyproject.toml ]; then pip install -e .; else pip install -r requirements.txt; fi
+          pip install pip-audit
+      - name: Test
+        run: pytest -q
+      - name: Dependency audit (known CVEs fail the build)
+        run: pip-audit
+
+  e2e:
+    needs: detect
+    if: needs.detect.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - name: Install
+        run: npm ci || npm install
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: E2E (drives the real UI)
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  web-quality:
+    runs-on: ubuntu-latest
+    needs: [detect, node]
+    if: needs.detect.outputs.node == 'true'
+    defaults:
+      run:
+        working-directory: ${{ needs.detect.outputs.node_dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - name: Install
+        run: npm ci || npm install
+      - name: Performance budget (Lighthouse CI)
+        if: hashFiles(format('{0}/.lighthouserc.json', needs.detect.outputs.node_dir)) != ''
+        run: npx --yes @lhci/cli autorun
+      - name: Accessibility (axe-core)
+        if: hashFiles(format('{0}/e2e/a11y.spec.ts', needs.detect.outputs.node_dir)) != ''
+        run: npx playwright test e2e/a11y.spec.ts
+
+  # Branch protection should require: secret-scan, node, php, python, e2e,
+  # web-quality. Every one of these CAN fail; none is a no-op that reports green.

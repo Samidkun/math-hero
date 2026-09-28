@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Hero — Main Soal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F4F1E4; --surface:#FFFFFF; --surface-raised:#FCFAF1;
+    --ink:#22301F; --ink-muted:#6B7A5E; --hero:#2E7D32; --hero-ink:#FFFFFF;
+    --success:#2E7D32; --danger:#C62828; --focus:#1565C0; --locked:#B5AE96;
+    --line:rgba(34,48,31,0.12); --gold:#F9A825; --accent-earth:#8D6E63;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r-sm:8px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+    --sh-1:0 1px 2px rgba(42,30,15,0.08); --sh-2:0 4px 12px rgba(42,30,15,0.12);
+    --sh-glow:0 0 0 4px rgba(245,168,37,0.30);
+    --font-display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--canvas);color:var(--ink);
+    font-family:var(--font-body);font-size:16px;line-height:1.5;
+    background-image:radial-gradient(var(--line) 1px,transparent 1px);
+    background-size:28px 28px;background-position:0 0}
+  /* ponytail: mockup-only state switcher; real app has no such bar.
+     upgrade: delete when wired to real game state. */
+  .toolbar{display:flex;gap:var(--s2);align-items:center;justify-content:center;
+    padding:var(--s4) var(--s4) 0;flex-wrap:wrap}
+  .toolbar-label{font-size:13px;font-weight:600;color:var(--ink-muted)}
+  .tbtn{font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer}
+  .tbtn:hover{border-color:var(--focus)}
+  .tbtn[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .wrap{width:100%;max-width:720px;margin-inline:auto;padding:var(--s5) var(--s4) var(--s7)}
+  .meta{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);
+    padding:0 var(--s2) var(--s4)}
+  .label{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)}
+  .meta-num{font-family:var(--font-display);font-weight:600;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+  .card{position:relative;background:var(--surface);border-radius:var(--r-lg);
+    box-shadow:var(--sh-2);padding:var(--s6)}
+  .timer{position:absolute;top:var(--s5);right:var(--s6);width:64px;height:64px}
+  .timer svg{display:block}
+  .track{fill:none;stroke:var(--line);stroke-width:6}
+  .ring{fill:none;stroke:var(--focus);stroke-width:6;stroke-linecap:round}
+  .timer-num{position:absolute;inset:0;display:grid;place-items:center;
+    font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .stem{position:relative;z-index:1;margin:var(--s3) 84px var(--s6) 0;
+    font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1.35}
+  .options{display:flex;flex-direction:column;gap:var(--s3)}
+  .option{display:flex;align-items:center;gap:var(--s3);width:100%;text-align:left;
+    background:var(--surface);border:2px solid var(--line);border-radius:var(--r-md);
+    padding:var(--s4) var(--s5);font-family:var(--font-body);font-size:16px;color:var(--ink);
+    cursor:pointer;transition:transform 150ms ease-out,border-color 150ms ease-out}
+  .option:hover:not(:disabled){transform:scale(1.02);border-color:var(--focus)}
+  .option:disabled{cursor:not-allowed;border-color:var(--locked);color:var(--ink-muted)}
+  .option.selected{border-color:var(--focus)}
+  .option.correct{border-color:var(--success)}
+  .option.wrong{border-color:var(--danger)}
+  .opt-key{flex:none;display:grid;place-items:center;width:32px;height:32px;
+    border-radius:var(--r-pill);background:var(--canvas);
+    font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--ink)}
+  .opt-text{flex:1 1 auto;font-variant-numeric:tabular-nums}
+  .opt-icon{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;
+    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .option.correct .icon-check{opacity:1;color:var(--success)}
+  .option.wrong .icon-x{opacity:1;color:var(--danger)}
+  .feedback{margin:var(--s5) 0 0;padding:var(--s3) var(--s4);border-radius:var(--r-md);
+    font-size:16px;border-left:4px solid}
+  .feedback-success{background:rgba(46,125,50,0.06);border-left-color:var(--success)}
+  .feedback-danger{background:rgba(198,40,40,0.06);border-left-color:var(--danger)}
+  .actions{margin-top:var(--s5)}
+  .btn-hero{background:var(--hero);color:var(--hero-ink);border:0;border-radius:var(--r-pill);
+    padding:12px 24px;font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer}
+  .btn-hero:hover{filter:brightness(0.94)}
+  .errorbox{margin-top:var(--s5);padding:var(--s5);border-radius:var(--r-md);
+    background:rgba(198,40,40,0.06);border-left:4px solid var(--danger)}
+  .err-row{display:flex;gap:var(--s3);align-items:flex-start}
+  .err-icon{flex:none;width:24px;height:24px;color:var(--danger);fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .err-title{margin:0 0 var(--s1);font-family:var(--font-display);font-weight:700;font-size:18px}
+  .err-text{margin:0 0 var(--s4);color:var(--ink)}
+  .hint{margin:var(--s5) var(--s2) 0;color:var(--ink-muted);font-size:16px}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  @media (prefers-reduced-motion:reduce){
+    .option{transition:none}
+    .option:hover:not(:disabled){transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar" role="group" aria-label="State mockup">
+  <span class="toolbar-label">State</span>
+  <button class="tbtn" data-state="in-progress" aria-pressed="true">in-progress</button>
+  <button class="tbtn" data-state="timed-out" aria-pressed="false">timed-out</button>
+  <button class="tbtn" data-state="error" aria-pressed="false">error</button>
+</div>
+
+<main class="wrap">
+  <div class="meta">
+    <span class="label">Kelas 5 · Level 4 · Operasi dasar</span>
+    <span class="meta-num">Soal 4 dari 10</span>
+  </div>
+
+  <section class="card" aria-labelledby="stem">
+    <div class="timer">
+      <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+        <circle class="track" cx="32" cy="32" r="26"></circle>
+        <circle class="ring" id="ring" cx="32" cy="32" r="26" transform="rotate(-90 32 32)"></circle>
+      </svg>
+      <span class="timer-num" id="timerNum">30</span>
+    </div>
+    <span class="sr-only" id="timerSr" role="timer">30 detik tersisa</span>
+
+    <h1 class="stem" id="stem">Pak Budi membeli 8 kantong jeruk. Tiap kantong berisi 6 buah. Lalu 3 jeruk busuk dibuang. Berapa sisa jeruk Pak Budi?</h1>
+
+    <div class="options" id="options">
+      <button class="option" data-i="0">
+        <span class="opt-key">A</span><span class="opt-text">45</span>
+        <svg class="opt-icon icon-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <svg class="opt-icon icon-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+      <button class="option" data-i="1">
+        <span class="opt-key">B</span><span class="opt-text">24</span>
+        <svg class="opt-icon icon-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <svg class="opt-icon icon-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+      <button class="option" data-i="2">
+        <span class="opt-key">C</span><span class="opt-text">48</span>
+        <svg class="opt-icon icon-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <svg class="opt-icon icon-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+      <button class="option" data-i="3">
+        <span class="opt-key">D</span><span class="opt-text">51</span>
+        <svg class="opt-icon icon-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <svg class="opt-icon icon-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+
+    <p class="feedback" id="feedback" hidden></p>
+
+    <div class="actions" id="actions" hidden>
+      <button class="btn-hero" id="nextBtn">Soal berikutnya</button>
+    </div>
+
+    <div class="errorbox" id="errorbox" hidden>
+      <div class="err-row">
+        <svg class="err-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.3 3.7 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0z"></path>
+          <path d="M12 9v4"></path><path d="M12 17h.01"></path>
+        </svg>
+        <div>
+          <h2 class="err-title">Yah, soalnya gagal dimuat</h2>
+          <p class="err-text">Koneksi internetmu terputus. Jawabanmu belum tersimpan — soal ini bisa diulang dari awal.</p>
+          <button class="btn-hero" id="retryBtn">Coba muat ulang</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="hint">Baca soalnya dulu, baru pilih jawaban. Waktu 30 detik — jajan keringat, tapi tenang saja.</p>
+</main>
+
+<script>
+  // ponytail: countdown is mockup-local; real deadline comes from the server
+  // (AC-3, server-authoritative). upgrade: sync to server deadline, drop this interval.
+  var CIRC = 2 * Math.PI * 26;
+  var ring = document.getElementById('ring');
+  var num = document.getElementById('timerNum');
+  var sr = document.getElementById('timerSr');
+  var options = document.getElementById('options');
+  var feedback = document.getElementById('feedback');
+  var actions = document.getElementById('actions');
+  var errorbox = document.getElementById('errorbox');
+  var CORRECT = 0;
+  var TOTAL = 30;
+  var left = TOTAL, iv = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  ring.style.strokeDasharray = CIRC.toFixed(2);
+
+  function ringColor(l){
+    return l > 10 ? 'var(--focus)' : (l > 5 ? 'var(--gold)' : 'var(--danger)');
+  }
+  function render(){
+    num.textContent = left;
+    sr.textContent = left + ' detik tersisa';
+    ring.style.strokeDashoffset = (CIRC * (1 - left / TOTAL)).toFixed(2);
+    ring.style.stroke = ringColor(left);
+  }
+  function start(){
+    stop();
+    render();
+    if (reduce) return; // reduced motion: ring static, angka saja
+    iv = setInterval(function(){
+      left--;
+      render();
+      if (left <= 0){ stop(); setState('timed-out'); }
+    }, 1000); // 1 fps tick — detik terasa, bukan smooth
+  }
+  function stop(){ if (iv){ clearInterval(iv); iv = null; } }
+
+  function resetQuestion(){
+    options.classList.remove('answered');
+    Array.prototype.forEach.call(options.children, function(o){
+      o.disabled = false;
+      o.classList.remove('selected','correct','wrong');
+    });
+    feedback.hidden = true;
+    actions.hidden = true;
+    errorbox.hidden = true;
+    left = TOTAL;
+  }
+
+  function setState(s){
+    Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.state === s));
+    });
+    var answered = options.classList.contains('answered');
+
+    if (s === 'error'){
+      stop();
+      errorbox.hidden = false;
+      actions.hidden = true;
+      feedback.hidden = true;
+      Array.prototype.forEach.call(options.children, function(o){ o.disabled = true; });
+    } else if (s === 'timed-out'){
+      stop();
+      left = 0; render();
+      errorbox.hidden = true;
+      Array.prototype.forEach.call(options.children, function(o){ o.disabled = true; });
+      feedback.hidden = false;
+      feedback.className = 'feedback feedback-danger';
+      feedback.innerHTML = '<strong>Waktu habis!</strong> Soal ini dilewati dan ikut dihitung salah.';
+      actions.hidden = false;
+    } else { // in-progress
+      errorbox.hidden = true;
+      if (!answered) resetQuestion();
+      start();
+    }
+  }
+
+  options.addEventListener('click', function(e){
+    var btn = e.target.closest('.option');
+    if (!btn || btn.disabled) return;
+    options.classList.add('answered');
+    var i = Number(btn.dataset.i);
+    btn.classList.add(i === CORRECT ? 'correct' : 'wrong');
+    if (i !== CORRECT){
+      options.querySelector('.option[data-i="' + CORRECT + '"]').classList.add('correct');
+    }
+    Array.prototype.forEach.call(options.children, function(o){ o.disabled = true; });
+    stop();
+    feedback.hidden = false;
+    if (i === CORRECT){
+      feedback.className = 'feedback feedback-success';
+      feedback.innerHTML = '<strong>Mantap!</strong> Jawabanmu benar.';
+    } else {
+      feedback.className = 'feedback feedback-danger';
+      feedback.innerHTML = '<strong>Belum tepat.</strong> Yang berwarna hijau adalah jawaban benar.';
+    }
+    actions.hidden = false;
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    resetQuestion();
+    setState('in-progress');
+  });
+  document.getElementById('retryBtn').addEventListener('click', function(){
+    resetQuestion();
+    setState('in-progress');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+    b.addEventListener('click', function(){ setState(b.dataset.state); });
+  });
+
+  start();
+</script>
+</body>
+</html>
