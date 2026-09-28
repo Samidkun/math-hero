@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laporan Anak — Math Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F4F1E4; --surface:#FFFFFF; --surface-raised:#FCFAF1;
+  --ink:#22301F; --ink-muted:#6B7A5E; --hero:#2E7D32; --hero-ink:#FFFFFF;
+  --success:#2E7D32; --danger:#C62828; --focus:#1565C0; --locked:#B5AE96;
+  --line:rgba(34,48,31,0.12); --gold:#F9A825; --accent-earth:#8D6E63;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --r-sm:8px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+  --sh-1:0 1px 2px rgba(42,30,15,0.08); --sh-2:0 4px 12px rgba(42,30,15,0.12);
+  --sh-glow:0 0 0 4px rgba(245,168,37,0.30);
+  --font-display:'Baloo 2',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5}
+h1{font-family:var(--font-display);font-size:24px;font-weight:700;margin:0}
+h2{font-family:var(--font-display);font-size:18px;font-weight:700;margin:0}
+.t-label{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted)}
+.num{font-family:var(--font-display);font-variant-numeric:tabular-nums}
+.page{max-width:880px;margin:0 auto;padding:var(--s6) var(--s4) var(--s7)}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s4);flex-wrap:wrap;margin-bottom:var(--s6)}
+.topbar .sub{color:var(--ink-muted);margin-top:var(--s1)}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--focus);font-size:13px;font-weight:600;text-decoration:none;margin-bottom:var(--s3)}
+.back:hover{text-decoration:underline}
+.card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-1);padding:var(--s5)}
+.section{margin-bottom:var(--s6)}
+.section-head{margin-bottom:var(--s3)}
+.section-note{color:var(--ink-muted);font-size:14px;margin:var(--s1) 0 0}
+
+.toggle{display:inline-flex;gap:var(--s1);padding:var(--s1);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);box-shadow:var(--sh-1)}
+.toggle button{border:none;background:transparent;border-radius:var(--r-pill);padding:8px 14px;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-muted);cursor:pointer}
+.toggle button:hover{background:var(--canvas);color:var(--ink)}
+.toggle button[aria-pressed="true"]{background:var(--hero);color:var(--hero-ink)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--canvas);color:var(--ink);font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;white-space:nowrap}
+.chip-100{background:var(--gold);border-color:transparent}
+.chip-lg{padding:6px 14px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+
+.student-select{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;box-shadow:var(--sh-1);cursor:pointer}
+
+.topic{padding:var(--s5) 0;border-top:1px solid var(--line)}
+.topic:first-child{padding-top:0;border-top:none}
+.topic-name{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3)}
+.topic-name .t-label{color:var(--accent-earth)}
+.bar-row{display:grid;grid-template-columns:104px 1fr 44px;gap:var(--s3);align-items:center;padding:5px 0}
+.bar-label{font-size:14px;font-weight:600;color:var(--ink)}
+.bar-track{height:12px;background:rgba(34,48,31,.08);border-radius:var(--r-pill);overflow:hidden}
+.bar-fill{height:100%;border-radius:var(--r-pill);background:var(--accent-earth)}
+.bar-fill.lead{background:var(--danger)}
+.bar-count{text-align:right;font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:15px;font-weight:600}
+.bar-hint{color:var(--ink-muted);font-size:13px;margin-top:var(--s2)}
+.bar-hint b{color:var(--danger);font-weight:600}
+
+.levels{list-style:none;margin:0;padding:0}
+.level-row{display:grid;grid-template-columns:40px 1fr auto;gap:var(--s4);align-items:center;padding:var(--s3) 0;border-top:1px solid var(--line)}
+.level-row:first-child{padding-top:0;border-top:none}
+.level-node{width:40px;height:40px;border-radius:50%;background:var(--canvas);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--ink)}
+.level-node.perfect{background:var(--gold);border-color:transparent;box-shadow:var(--sh-glow)}
+.level-node.locked{background:var(--canvas);border-color:var(--locked);color:var(--locked)}
+.level-name{font-size:15px;font-weight:600}
+.progress-track{height:10px;background:rgba(34,48,31,.08);border-radius:var(--r-pill);overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:var(--r-pill);background:var(--hero)}
+.progress-fill.perfect{background:var(--gold)}
+.level-meta{color:var(--ink-muted);font-size:13px;margin-top:3px}
+
+.state{display:none}
+body[data-state="loaded"] .state-loaded{display:block}
+body[data-state="empty"] .state-empty{display:block}
+
+.empty{padding:var(--s7) var(--s5);text-align:center}
+.empty-art{display:block;margin:0 auto var(--s5)}
+.empty h2{margin-bottom:var(--s2)}
+.empty p{color:var(--ink-muted);max-width:44ch;margin:0 auto}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+</style>
+</head>
+<body data-state="loaded">
+<div class="page">
+  <div class="topbar">
+    <div>
+      <a class="back" href="classroom.html">← Kembali ke Kelas Saya</a>
+      <span class="t-label">Laporan Anak</span>
+      <h1>Budi Santoso</h1>
+      <div class="sub">Kelas 6A · SD Negeri Jelajah 2 · 24 soal terjawab</div>
+    </div>
+    <div style="display:grid;gap:var(--s3);justify-items:end">
+      <div class="toggle" role="group" aria-label="Status mockup">
+        <button type="button" data-state-btn="loaded" aria-pressed="true">Ada data</button>
+        <button type="button" data-state-btn="empty" aria-pressed="false">Kosong</button>
+      </div>
+      <select class="student-select" aria-label="Pilih siswa">
+        <option selected>Budi Santoso</option>
+        <option>Sari Wulandari</option>
+        <option>Ahmad Fauzan</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- LOADED -->
+  <div class="state state-loaded">
+    <div class="section">
+      <div class="chips">
+        <span class="chip chip-lg">Level saat ini: 5</span>
+        <span class="chip chip-lg">3 level sempurna</span>
+        <span class="chip chip-lg">9 kesalahan terlabel</span>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-head">
+        <span class="t-label">Distribusi kesalahan per topik</span>
+        <p class="section-note">Hanya kesalahan yang ditampilkan — bar terpanjang adalah kesalahan yang paling sering muncul.</p>
+      </div>
+
+      <div class="topic">
+        <div class="topic-name">
+          <span class="t-label">Rasio &amp; skala</span>
+          <span class="t-label">5 kesalahan</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">reversal</span>
+          <span class="bar-track"><span class="bar-fill lead" style="width:100%"></span></span>
+          <span class="bar-count num">3</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">additive</span>
+          <span class="bar-track"><span class="bar-fill" style="width:33%"></span></span>
+          <span class="bar-count num">1</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">multiply</span>
+          <span class="bar-track"><span class="bar-fill" style="width:33%"></span></span>
+          <span class="bar-count num">1</span>
+        </div>
+        <p class="bar-hint">Paling sering <b>reversal</b> — Budi menukar suku air dan konsentrat. Mulai ulang dari soal perbandingan sederhana.</p>
+      </div>
+
+      <div class="topic">
+        <div class="topic-name">
+          <span class="t-label">Persen</span>
+          <span class="t-label">3 kesalahan</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">percent-base</span>
+          <span class="bar-track"><span class="bar-fill lead" style="width:67%"></span></span>
+          <span class="bar-count num">2</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">additive</span>
+          <span class="bar-track"><span class="bar-fill" style="width:33%"></span></span>
+          <span class="bar-count num">1</span>
+        </div>
+        <p class="bar-hint">Paling sering <b>percent-base</b> — persen dihitung dari angka kelipatan, bukan dari 100.</p>
+      </div>
+
+      <div class="topic">
+        <div class="topic-name">
+          <span class="t-label">Persamaan linear</span>
+          <span class="t-label">1 kesalahan</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">distributive</span>
+          <span class="bar-track"><span class="bar-fill lead" style="width:100%"></span></span>
+          <span class="bar-count num">1</span>
+        </div>
+        <p class="bar-hint">Paling sering <b>distributive</b> — suku di luar kurung hanya dikalikan ke suku pertama.</p>
+      </div>
+
+      <div class="topic">
+        <div class="topic-name">
+          <span class="t-label">Bilangan berpangkat &amp; akar</span>
+          <span class="t-label">0 kesalahan</span>
+        </div>
+        <p class="bar-hint" style="margin-top:0">Belum ada kesalahan tercatat di topik ini.</p>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="section-head">
+        <span class="t-label">Progres per level</span>
+        <p class="section-note">Level berikutnya terbuka hanya setelah nilai 100.</p>
+      </div>
+      <ul class="levels">
+        <li class="level-row">
+          <span class="level-node num perfect" aria-label="Level 1: sempurna">1</span>
+          <span>
+            <span class="level-name">Level 1 · Operasi dasar</span>
+            <span class="progress-track"><span class="progress-fill perfect" style="width:100%"></span></span>
+            <span class="level-meta">Nilai terbaik 100 · selesai</span>
+          </span>
+          <span class="chip chip-100 num">100</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num perfect" aria-label="Level 2: sempurna">2</span>
+          <span>
+            <span class="level-name">Level 2 · Estimasi &amp; pembulatan</span>
+            <span class="progress-track"><span class="progress-fill perfect" style="width:100%"></span></span>
+            <span class="level-meta">Nilai terbaik 100 · selesai</span>
+          </span>
+          <span class="chip chip-100 num">100</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num perfect" aria-label="Level 3: sempurna">3</span>
+          <span>
+            <span class="level-name">Level 3 · Pecahan sederhana</span>
+            <span class="progress-track"><span class="progress-fill perfect" style="width:100%"></span></span>
+            <span class="level-meta">Nilai terbaik 100 · selesai</span>
+          </span>
+          <span class="chip chip-100 num">100</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num" aria-label="Level 4: nilai terbaik 70">4</span>
+          <span>
+            <span class="level-name">Level 4 · Luas persegi panjang</span>
+            <span class="progress-track"><span class="progress-fill" style="width:70%"></span></span>
+            <span class="level-meta">Nilai terbaik 70 · belum sempurna</span>
+          </span>
+          <span class="chip num">70</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num" aria-label="Level 5: sedang dikerjakan, nilai terbaik 60">5</span>
+          <span>
+            <span class="level-name">Level 5 · KPK &amp; FPB</span>
+            <span class="progress-track"><span class="progress-fill" style="width:60%"></span></span>
+            <span class="level-meta">Nilai terbaik 60 · sedang dikerjakan</span>
+          </span>
+          <span class="chip num">60</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num locked" aria-label="Level 6: terkunci">6</span>
+          <span>
+            <span class="level-name">Level 6 · Bilangan desimal</span>
+            <span class="progress-track"><span class="progress-fill" style="width:0%"></span></span>
+            <span class="level-meta">Terkunci — selesaikan Level 5 dengan nilai 100</span>
+          </span>
+          <span class="chip num">—</span>
+        </li>
+        <li class="level-row">
+          <span class="level-node num locked" aria-label="Level 7: terkunci">7</span>
+          <span>
+            <span class="level-name">Level 7 · Pecahan campuran</span>
+            <span class="progress-track"><span class="progress-fill" style="width:0%"></span></span>
+            <span class="level-meta">Terkunci — selesaikan Level 6 dengan nilai 100</span>
+          </span>
+          <span class="chip num">—</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="state state-empty">
+    <div class="card">
+      <div class="empty">
+        <svg class="empty-art" width="96" height="72" viewBox="0 0 96 72" aria-hidden="true">
+          <path d="M10 60 C 30 60, 34 20, 56 20 S 82 44, 88 12" fill="none" stroke="#8D6E63" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>
+          <circle cx="10" cy="60" r="6" fill="#2E7D32"/>
+          <circle cx="56" cy="20" r="6" fill="none" stroke="#B5AE96" stroke-width="2"/>
+          <circle cx="88" cy="12" r="6" fill="none" stroke="#B5AE96" stroke-width="2"/>
+        </svg>
+        <span class="t-label">Belum ada jejak</span>
+        <h2>Budi Santoso belum menjawab soal apa pun</h2>
+        <p>Distribusi kesalahan dan progres per level muncul di sini setelah percobaan level pertamanya selesai.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var body = document.body;
+document.querySelectorAll('[data-state-btn]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    body.dataset.state = btn.dataset.stateBtn;
+    document.querySelectorAll('[data-state-btn]').forEach(function (other) {
+      other.setAttribute('aria-pressed', String(other === btn));
+    });
+  });
+});
+</script>
+</body>
+</html>

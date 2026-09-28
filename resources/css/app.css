@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+  /* Math Hero tokens — DESIGN.md (petualangan alam) */
+  --color-canvas: #F4F1E4;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FCFAF1;
+  --color-ink: #22301F;
+  --color-ink-soft: #5A6B57;
+  --color-leaf: #2F6B4F;
+  --color-leaf-deep: #1F4A37;
+  --color-gold: #C98A1E;
+  --color-danger: #B23A2E;
+
+  --font-display: 'Baloo 2', 'Nunito', ui-rounded, system-ui, sans-serif;
+  --font-sans: 'Nunito', ui-rounded, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}

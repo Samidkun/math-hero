@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Hero — Gabung Kelas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F4F1E4; --surface:#FFFFFF; --surface-raised:#FCFAF1;
+    --ink:#22301F; --ink-muted:#6B7A5E; --hero:#2E7D32; --hero-ink:#FFFFFF;
+    --success:#2E7D32; --danger:#C62828; --focus:#1565C0; --locked:#B5AE96;
+    --line:rgba(34,48,31,0.12); --gold:#F9A825; --accent-earth:#8D6E63;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r-sm:8px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+    --sh-1:0 1px 2px rgba(42,30,15,0.08); --sh-2:0 4px 12px rgba(42,30,15,0.12);
+    --sh-glow:0 0 0 4px rgba(245,168,37,0.30);
+    --font-display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--canvas);color:var(--ink);
+    font-family:var(--font-body);font-size:16px;line-height:1.5;
+    background-image:radial-gradient(var(--line) 1px,transparent 1px);
+    background-size:28px 28px;display:flex;flex-direction:column}
+  /* ponytail: mockup-only state switcher. upgrade: delete when real validation lands (AC-9). */
+  .toolbar{display:flex;gap:var(--s2);align-items:center;justify-content:center;
+    padding:var(--s4) var(--s4) 0;flex-wrap:wrap}
+  .toolbar-label{font-size:13px;font-weight:600;color:var(--ink-muted)}
+  .tbtn{font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer}
+  .tbtn:hover{border-color:var(--focus)}
+  .tbtn[aria-pressed="true"]{background:var(--ink);color:var(--hero-ink);border-color:var(--ink)}
+  .wrap{width:100%;max-width:560px;margin-inline:auto;padding:var(--s6) var(--s4) var(--s7);
+    flex:1 1 auto;display:flex;flex-direction:column}
+  .label{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)}
+  .title{margin:var(--s2) 0 var(--s1);font-family:var(--font-display);font-weight:700;
+    font-size:24px;line-height:1.3}
+  .intro{margin:0 0 var(--s6);color:var(--ink-muted)}
+  .card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-2);
+    padding:var(--s6)}
+  .field{margin-bottom:var(--s6)}
+  .field:last-of-type{margin-bottom:var(--s5)}
+  .field > label{display:block;margin-bottom:var(--s2);font-family:var(--font-body);
+    font-size:16px;font-weight:600;color:var(--ink)}
+  .field-help{display:block;margin-top:var(--s2);color:var(--ink-muted);font-size:13px}
+  .code-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--s2)}
+  .code-cell{width:100%;height:56px;text-align:center;
+    font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:0.02em;
+    color:var(--ink);background:var(--surface);border:2px solid var(--line);
+    border-radius:var(--r-sm);padding:0;caret-color:var(--focus);
+    text-transform:uppercase;font-variant-numeric:tabular-nums}
+  .code-cell:hover{border-color:var(--ink-muted)}
+  .code-cell:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px rgba(21,101,192,0.18)}
+  .code-grid.invalid .code-cell{border-color:var(--danger)}
+  .code-grid.invalid .code-cell:focus{box-shadow:0 0 0 3px rgba(198,40,40,0.18)}
+  .name-input{width:100%;height:48px;padding:0 var(--s4);
+    font-family:var(--font-body);font-size:16px;color:var(--ink);
+    background:var(--surface);border:2px solid var(--line);border-radius:var(--r-sm);
+    caret-color:var(--focus)}
+  .name-input:hover{border-color:var(--ink-muted)}
+  .name-input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px rgba(21,101,192,0.18)}
+  .name-input.invalid{border-color:var(--danger)}
+  .name-input.invalid:focus{box-shadow:0 0 0 3px rgba(198,40,40,0.18)}
+  .error{display:none;gap:var(--s3);align-items:flex-start;margin-top:var(--s4);
+    padding:var(--s4);border-radius:var(--r-md);background:rgba(198,40,40,0.06);
+    border-left:4px solid var(--danger)}
+  .error.show{display:flex}
+  .err-icon{flex:none;width:20px;height:20px;color:var(--danger);fill:none;
+    stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    margin-top:2px}
+  .err-title{margin:0 0 var(--s1);font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--danger)}
+  .err-text{margin:0;color:var(--ink)}
+  .actions{margin-top:var(--s6)}
+  .btn-hero{width:100%;background:var(--hero);color:var(--hero-ink);border:0;
+    border-radius:var(--r-pill);padding:14px 24px;font-family:var(--font-body);
+    font-size:16px;font-weight:600;cursor:pointer}
+  .btn-hero:hover{filter:brightness(0.94)}
+  .btn-hero:disabled{background:var(--locked);cursor:not-allowed;filter:none}
+  .alt{margin:var(--s6) 0 0;text-align:center;color:var(--ink-muted)}
+  .alt a{color:var(--focus);font-weight:600}
+  .taken-list{margin:var(--s4) 0 0;padding:var(--s4);border-radius:var(--r-md);
+    background:var(--surface-raised);border:1px solid var(--line)}
+  .taken-label{margin:0 0 var(--s2);font-size:13px;font-weight:600;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--ink-muted)}
+  .taken-names{margin:0;color:var(--ink)}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  @media (max-width:420px){ .code-cell{font-size:20px;height:48px} }
+</style>
+</head>
+<body>
+<div class="toolbar" role="group" aria-label="State mockup">
+  <span class="toolbar-label">State</span>
+  <button class="tbtn" data-state="default" aria-pressed="true">default</button>
+  <button class="tbtn" data-state="wrong-code" aria-pressed="false">error-wrong-code</button>
+  <button class="tbtn" data-state="name-taken" aria-pressed="false">error-name-taken</button>
+</div>
+
+<main class="wrap">
+  <p class="label">Kelas 5 · Gabung</p>
+  <h1 class="title">Gabung kelas lewat kode</h1>
+  <p class="intro">Minta kode 6 huruf dari gurumu, lalu pakai nama panggilanmu.</p>
+
+  <form class="card" id="form" novalidate>
+    <div class="field">
+      <label for="c0">Kode kelas</label>
+      <div class="code-grid" id="codeGrid">
+        <input class="code-cell" id="c0" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 1" placeholder="·">
+        <input class="code-cell" id="c1" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 2" placeholder="·">
+        <input class="code-cell" id="c2" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 3" placeholder="·">
+        <input class="code-cell" id="c3" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 4" placeholder="·">
+        <input class="code-cell" id="c4" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 5" placeholder="·">
+        <input class="code-cell" id="c5" maxlength="1" inputmode="text" autocomplete="off" aria-label="Karakter 6" placeholder="·">
+      </div>
+      <span class="field-help" id="codeHelp">6 huruf, tidak ada angka atau spasi.</span>
+
+      <div class="error" id="codeError" role="alert" aria-live="polite">
+        <svg class="err-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path>
+        </svg>
+        <div>
+          <p class="err-title" id="codeErrTitle">Kode kelasnya belum ketemu</p>
+          <p class="err-text" id="codeErrText">Cek lagi 6 hurufnya dari gurumu. Kalau tulisannya sudah benar tapi tetap gagal, minta guru memeriksa kode kelasnya.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="name">Nama panggilan</label>
+      <input class="name-input" id="name" type="text" maxlength="20" autocomplete="off"
+             placeholder="Misal: Sari" aria-describedby="nameHelp">
+      <span class="field-help" id="nameHelp">3 sampai 20 huruf. Ini namamu di kelas.</span>
+
+      <div class="error" id="nameError" role="alert" aria-live="polite">
+        <svg class="err-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path>
+        </svg>
+        <div>
+          <p class="err-title" id="nameErrTitle">Nama panggilan sudah dipakai</p>
+          <p class="err-text" id="nameErrText">Nama ini sudah dipakai teman di kelas yang sama. Ganti nama panggilanmu, misalnya tambahkan huruf awal namamu.</p>
+          <div class="taken-list">
+            <p class="taken-label">Sudah dipakai di kelas ini</p>
+            <p class="taken-names" id="takenNames">Sari, Sari P, Saripah</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-hero" id="joinBtn" type="submit">Gas, gabung kelas</button>
+    </div>
+  </form>
+
+  <p class="alt">Belum punya kode? <a href="#">Main langsung tanpa kelas</a>.</p>
+</main>
+
+<script>
+  // ponytail: mockup-only state switcher + dummy validation. Real join is
+  // server-side (AC-9). upgrade: delete this; keep the a11y wiring (role=alert,
+  // aria-invalid, autofocus) since it survives the swap.
+  var VALID_CODE = 'HTJ4ZQ';
+  var cells = Array.prototype.slice.call(document.querySelectorAll('.code-cell'));
+  var codeGrid = document.getElementById('codeGrid');
+  var nameInput = document.getElementById('name');
+  var codeError = document.getElementById('codeError');
+  var nameError = document.getElementById('nameError');
+  var joinBtn = document.getElementById('joinBtn');
+
+  function code(){ return cells.map(function(c){ return c.value; }).join('').toUpperCase(); }
+  function isFilled(){ return code().length === 6 && nameInput.value.trim().length >= 3; }
+  function syncBtn(){ joinBtn.disabled = !isFilled(); }
+
+  cells.forEach(function(cell, i){
+    cell.addEventListener('input', function(){
+      cell.value = cell.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (cell.value && i < cells.length - 1) cells[i + 1].focus();
+      clearCodeError();
+      syncBtn();
+    });
+    cell.addEventListener('keydown', function(e){
+      if (e.key === 'Backspace' && !cell.value && i > 0){ cells[i - 1].focus(); }
+      if (e.key === 'ArrowLeft' && i > 0){ cells[i - 1].focus(); }
+      if (e.key === 'ArrowRight' && i < cells.length - 1){ cells[i + 1].focus(); }
+    });
+  });
+  nameInput.addEventListener('input', function(){ clearNameError(); syncBtn(); });
+
+  function clearCodeError(){
+    codeError.classList.remove('show');
+    codeGrid.classList.remove('invalid');
+    cells.forEach(function(c){ c.removeAttribute('aria-invalid'); });
+  }
+  function clearNameError(){
+    nameError.classList.remove('show');
+    nameInput.classList.remove('invalid');
+    nameInput.removeAttribute('aria-invalid');
+  }
+  function showCodeError(title, text){
+    document.getElementById('codeErrTitle').textContent = title;
+    document.getElementById('codeErrText').textContent = text;
+    codeError.classList.add('show');
+    codeGrid.classList.add('invalid');
+    cells.forEach(function(c){ c.setAttribute('aria-invalid', 'true'); });
+    cells[0].focus();
+  }
+  function showNameError(title, text, names){
+    document.getElementById('nameErrTitle').textContent = title;
+    document.getElementById('nameErrText').textContent = text;
+    if (names) document.getElementById('takenNames').textContent = names;
+    nameError.classList.add('show');
+    nameInput.classList.add('invalid');
+    nameInput.setAttribute('aria-invalid', 'true');
+    nameInput.focus();
+  }
+
+  function setState(s){
+    Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.state === s));
+    });
+    clearCodeError(); clearNameError();
+    if (s === 'default'){
+      cells.forEach(function(c, i){ c.value = ''; });
+      nameInput.value = '';
+      cells[0].focus();
+    } else if (s === 'wrong-code'){
+      cells.forEach(function(c, i){ c.value = VALID_CODE[i]; });
+      nameInput.value = 'Sari';
+      showCodeError('Kode kelasnya belum ketemu',
+        'Kode HTJ4ZQ tidak ada di sekolah ini. Cek lagi 6 hurufnya dari gurumu — kalau sudah benar tapi tetap gagal, minta guru memeriksa kode kelasnya.');
+    } else if (s === 'name-taken'){
+      cells.forEach(function(c, i){ c.value = VALID_CODE[i]; });
+      nameInput.value = 'Sari';
+      showNameError('Nama panggilan sudah dipakai',
+        'Nama "Sari" sudah dipakai teman di kelas HTJ4ZQ. Ganti nama panggilanmu, misalnya "Sari P" atau nama lengkapmu.',
+        'Sari, Sari P, Saripah');
+    }
+    syncBtn();
+  }
+
+  document.getElementById('form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if (code() !== VALID_CODE){
+      showCodeError('Kode kelasnya belum ketemu',
+        'Cek lagi 6 hurufnya dari gurumu. Kalau tulisannya sudah benar tapi tetap gagal, minta guru memeriksa kode kelasnya.');
+      return;
+    }
+    if (nameInput.value.trim().toLowerCase() === 'sari'){
+      showNameError('Nama panggilan sudah dipakai',
+        'Nama "Sari" sudah dipakai teman di kelas HTJ4ZQ. Ganti nama panggilanmu, misalnya "Sari P" atau nama lengkapmu.',
+        'Sari, Sari P, Saripah');
+      return;
+    }
+    alert('Berhasil gabung kelas! (mockup — belum ada server)');
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+    b.addEventListener('click', function(){ setState(b.dataset.state); });
+  });
+
+  cells[0].focus();
+  syncBtn();
+</script>
+</body>
+</html>

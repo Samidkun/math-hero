@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Hero — Hasil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F4F1E4; --surface:#FFFFFF; --surface-raised:#FCFAF1;
+    --ink:#22301F; --ink-muted:#6B7A5E; --hero:#2E7D32; --hero-ink:#FFFFFF;
+    --success:#2E7D32; --danger:#C62828; --focus:#1565C0; --locked:#B5AE96;
+    --line:rgba(34,48,31,0.12); --gold:#F9A825; --accent-earth:#8D6E63;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r-sm:8px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+    --sh-1:0 1px 2px rgba(42,30,15,0.08); --sh-2:0 4px 12px rgba(42,30,15,0.12);
+    --sh-glow:0 0 0 4px rgba(245,168,37,0.30);
+    --font-display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--canvas);color:var(--ink);
+    font-family:var(--font-body);font-size:16px;line-height:1.5;
+    background-image:radial-gradient(var(--line) 1px,transparent 1px);
+    background-size:28px 28px}
+  /* ponytail: mockup-only state switcher. upgrade: delete when driven by attempt result. */
+  .toolbar{display:flex;gap:var(--s2);align-items:center;justify-content:center;
+    padding:var(--s4) var(--s4) 0;flex-wrap:wrap}
+  .toolbar-label{font-size:13px;font-weight:600;color:var(--ink-muted)}
+  .tbtn{font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer}
+  .tbtn:hover{border-color:var(--focus)}
+  .tbtn[aria-pressed="true"]{background:var(--ink);color:var(--hero-ink);border-color:var(--ink)}
+  .wrap{width:100%;max-width:720px;margin-inline:auto;padding:var(--s5) var(--s4) var(--s7)}
+  .panel{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-2);
+    padding:var(--s6) var(--s6) var(--s5)}
+  .center{text-align:center}
+  .label{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted)}
+  .score{position:relative;margin:var(--s2) 0 var(--s3);display:inline-flex;align-items:baseline;justify-content:center;gap:var(--s2)}
+  .score-num{font-family:var(--font-display);font-weight:700;font-size:72px;line-height:1;
+    color:var(--ink);font-variant-numeric:tabular-nums}
+  .score-num.perfect{color:var(--gold);text-shadow:var(--sh-glow)}
+  .score-unit{font-family:var(--font-display);font-weight:600;font-size:28px;color:var(--ink-muted)}
+  .score-cap{font-size:16px;color:var(--ink-muted);margin:0 0 var(--s5)}
+  .stars{display:flex;gap:var(--s2);justify-content:center;margin:var(--s4) 0 var(--s5)}
+  .star{width:32px;height:32px;fill:var(--line);stroke:none}
+  .star.on{fill:var(--gold)}
+  .perfect .star.on{filter:drop-shadow(var(--sh-glow))}
+  .chips{display:flex;flex-wrap:wrap;gap:var(--s3);justify-content:center;
+    padding-top:var(--s5);border-top:1px solid var(--line)}
+  .chip{display:inline-flex;align-items:center;gap:var(--s2);padding:6px 14px;
+    border-radius:var(--r-pill);background:var(--surface-raised);border:1px solid var(--line);
+    font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .chip-ico{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-muted)}
+  .chip.gold{color:var(--gold);border-color:rgba(245,168,37,0.5)}
+  .chip.gold .chip-ico{color:var(--gold)}
+  .section{margin-top:var(--s7)}
+  .section-head{display:flex;justify-content:space-between;align-items:baseline;
+    gap:var(--s3);padding:0 var(--s2) var(--s4)}
+  .h2{margin:0;font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--ink)}
+  .hint{margin:0;color:var(--ink-muted);font-size:16px}
+  .review-item{margin-top:var(--s4);background:var(--surface-raised);
+    border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s5)}
+  .review-q{display:flex;gap:var(--s3);align-items:baseline}
+  .q-num{flex:none;width:28px;height:28px;border-radius:var(--r-pill);
+    display:grid;place-items:center;background:var(--canvas);
+    font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--ink)}
+  .q-text{font-family:var(--font-display);font-weight:600;font-size:18px;line-height:1.4;color:var(--ink)}
+  .answer-rows{margin:var(--s4) 0 0;display:flex;flex-direction:column;gap:var(--s2)}
+  .answer-row{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);
+    border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface)}
+  .answer-row .key{flex:none;width:22px;height:22px;border-radius:var(--r-pill);
+    display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:13px;
+    background:var(--canvas);color:var(--ink)}
+  .answer-row .val{flex:1 1 auto;font-variant-numeric:tabular-nums}
+  .answer-row.your{border-left:4px solid var(--danger)}
+  .answer-row.right{border-left:4px solid var(--success)}
+  .answer-row .tag{font-size:13px;font-weight:600;color:var(--ink-muted)}
+  .answer-row.your .tag{color:var(--danger)}
+  .answer-row.right .tag{color:var(--success)}
+  .mc{display:flex;gap:var(--s3);align-items:flex-start;margin-top:var(--s4);
+    padding:var(--s4);border-radius:var(--r-md);background:rgba(141,110,99,0.08);
+    border-left:4px solid var(--accent-earth)}
+  .mc-icon{flex:none;width:20px;height:20px;color:var(--accent-earth);fill:none;
+    stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mc-label{margin:0 0 var(--s1);font-size:13px;font-weight:600;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--accent-earth)}
+  .mc-text{margin:0;color:var(--ink)}
+  .perfect-banner{display:none;gap:var(--s4);align-items:center;justify-content:center;
+    padding:var(--s5);border-radius:var(--r-md);background:rgba(245,168,37,0.10);
+    border:1px solid rgba(245,168,37,0.5);margin-top:var(--s5)}
+  .perfect-banner.show{display:flex}
+  .pb-icon{flex:none;width:32px;height:32px;fill:var(--gold);stroke:none}
+  .pb-text{margin:0;font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--ink)}
+  .actions{display:flex;flex-wrap:wrap;gap:var(--s3);justify-content:center;margin-top:var(--s7)}
+  .btn-hero{background:var(--hero);color:var(--hero-ink);border:0;border-radius:var(--r-pill);
+    padding:12px 24px;font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer}
+  .btn-hero:hover{filter:brightness(0.94)}
+  .btn-ghost{background:var(--surface);color:var(--ink);border:2px solid var(--line);
+    border-radius:var(--r-pill);padding:10px 22px;font-family:var(--font-body);
+    font-size:16px;font-weight:600;cursor:pointer}
+  .btn-ghost:hover{border-color:var(--focus)}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  @media (max-width:520px){
+    .score-num{font-size:56px}
+    .review-q{flex-direction:column;gap:var(--s2)}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar" role="group" aria-label="State mockup">
+  <span class="toolbar-label">State</span>
+  <button class="tbtn" data-state="has-wrong" aria-pressed="true">has-wrong</button>
+  <button class="tbtn" data-state="perfect" aria-pressed="false">perfect-100%</button>
+</div>
+
+<main class="wrap">
+  <section class="panel center" aria-labelledby="scoreLabel">
+    <p class="label" id="scoreLabel">Kelas 5 · Level 4 · Selesai</p>
+    <div class="score">
+      <span class="score-num" id="scoreNum">70</span>
+      <span class="score-unit">dari 100</span>
+    </div>
+    <p class="score-cap" id="scoreCap">7 dari 10 soal benar. Yuk lihat yang masih meleset.</p>
+
+    <div class="stars" id="stars" aria-hidden="true">
+      <svg class="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3 6.2 20.4l1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>
+      <svg class="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3 6.2 20.4l1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>
+      <svg class="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3 6.2 20.4l1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>
+    </div>
+
+    <div class="chips">
+      <span class="chip"><svg class="chip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>7 benar</span>
+      <span class="chip"><svg class="chip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>3 salah</span>
+      <span class="chip"><svg class="chip-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>4 mnt 12 dtk</span>
+      <span class="chip" id="chipBest"><svg class="chip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 15 9l7 .9-5 4.9 1.2 7L12 18.5 5.8 21.8 7 14.8 2 9.9 9 9z"></path></svg>Rekor terbaik 90</span>
+    </div>
+
+    <div class="perfect-banner" id="perfectBanner">
+      <svg class="pb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 15 9l7 .9-5 4.9 1.2 7L12 18.5 5.8 21.8 7 14.8 2 9.9 9 9z"></path></svg>
+      <p class="pb-text">Sempurna! Level 5 terbuka. Jejakmu makin dalam.</p>
+    </div>
+  </section>
+
+  <section class="section" id="reviewSection" aria-labelledby="reviewHead">
+    <div class="section-head">
+      <h2 class="h2" id="reviewHead">Pelajaran dari jawaban yang salah</h2>
+      <span class="hint" id="reviewHint">3 soal perlu dibahas</span>
+    </div>
+
+    <div id="reviewList">
+
+      <article class="review-item">
+        <div class="review-q">
+          <span class="q-num">2</span>
+          <p class="q-text">Sari punya 3 karung beras, masing-masing berisi 7 kg. Karung keempat berisi 7 kg lagi. Berapa total kilogram beras Sari?</p>
+        </div>
+        <div class="answer-rows">
+          <div class="answer-row your">
+            <span class="key">B</span><span class="val">10</span>
+            <span class="tag">Jawabanmu</span>
+          </div>
+          <div class="answer-row right">
+            <span class="key">D</span><span class="val">28</span>
+            <span class="tag">Jawaban benar</span>
+          </div>
+        </div>
+        <div class="mc">
+          <svg class="mc-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 3 2 4 2 6h8c0-2 2-3 2-6a6 6 0 0 0-6-6z"></path><path d="M9.5 19h5"></path></svg>
+          <div>
+            <p class="mc-label">Kesalahan: operasi tertukar</p>
+            <p class="mc-text">Kamu memakai perkalian padahal soal meminta penjumlahan berulang. Tiap karung itu kelompok — kalau semua kelompok sama besar, jumlahnya 4 × 7 kg.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="review-item">
+        <div class="review-q">
+          <span class="q-num">5</span>
+          <p class="q-text">Wati berjalan dari rumah ke sekolah selama 40 menit. Sekolah dimulai pukul 07.20. Pukul berapa Wati harus berangkat?</p>
+        </div>
+        <div class="answer-rows">
+          <div class="answer-row your">
+            <span class="key">A</span><span class="val">08.00</span>
+            <span class="tag">Jawabanmu</span>
+          </div>
+          <div class="answer-row right">
+            <span class="key">C</span><span class="val">06.40</span>
+            <span class="tag">Jawaban benar</span>
+          </div>
+        </div>
+        <div class="mc">
+          <svg class="mc-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 3 2 4 2 6h8c0-2 2-3 2-6a6 6 0 0 0-6-6z"></path><path d="M9.5 19h5"></path></svg>
+          <div>
+            <p class="mc-label">Kesalahan: arah perhitungan terbalik</p>
+            <p class="mc-text">Kamu menambahkan waktu jalan ke jam masuk. Padahal jam berangkat adalah jam masuk dikurangi lama perjalanan: 07.20 − 40 menit = 06.40.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="review-item">
+        <div class="review-q">
+          <span class="q-num">8</span>
+          <p class="q-text">Sebuah akuarium berbentuk balok berisi 6 liter air. Tiap liter sama dengan 1.000 mililiter. Berapa mililiter air di dalam akuarium?</p>
+        </div>
+        <div class="answer-rows">
+          <div class="answer-row your">
+            <span class="key">C</span><span class="val">600</span>
+            <span class="tag">Jawabanmu</span>
+          </div>
+          <div class="answer-row right">
+            <span class="key">A</span><span class="val">6.000</span>
+            <span class="tag">Jawaban benar</span>
+          </div>
+        </div>
+        <div class="mc">
+          <svg class="mc-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 3 2 4 2 6h8c0-2 2-3 2-6a6 6 0 0 0-6-6z"></path><path d="M9.5 19h5"></path></svg>
+          <div>
+            <p class="mc-label">Kesalahan: tanda desimal terlewat</p>
+            <p class="mc-text">6 liter = 6 ribu mililiter. Kamu menulisnya 6.000, yaitu enam koma nol — bukan enam ribu. Titik di angka Indonesia adalah pemisah ribuan, jadi nilainya menjadi sepuluh kali lebih besar.</p>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn-hero" id="againBtn">Main ulang level ini</button>
+    <button class="btn-ghost" id="mapBtn">Buka peta level</button>
+  </div>
+</main>
+
+<script>
+  // ponytail: mockup-only state switcher; real data comes from ATTEMPT + ANSWER
+  // rows (AC-6). upgrade: render rows from server props, delete this script.
+  var HASWRONG = {
+    score: 70, correct: 7, wrong: 3, duration: '4 mnt 12 dtk',
+    caption: '7 dari 10 soal benar. Yuk lihat yang masih meleset.',
+    starsOn: 2, best: 'Rekor terbaik 90'
+  };
+  var PERFECT = {
+    score: 100, correct: 10, wrong: 0, duration: '2 mnt 38 dtk',
+    caption: 'Semua soal benar. Tidak ada yang perlu diperbaiki.',
+    starsOn: 3, best: 'Rekor baru 100'
+  };
+
+  function setState(s){
+    var d = s === 'perfect' ? PERFECT : HASWRONG;
+    Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.state === s));
+    });
+    var num = document.getElementById('scoreNum');
+    num.textContent = d.score;
+    num.classList.toggle('perfect', s === 'perfect');
+    document.getElementById('scoreCap').textContent = d.caption;
+    document.getElementById('perfectBanner').classList.toggle('show', s === 'perfect');
+
+    var chips = document.querySelectorAll('.chips .chip');
+    function setChipText(el, txt){ el.lastChild.nodeValue = txt; }
+    setChipText(chips[0], d.correct + ' benar');
+    setChipText(chips[1], d.wrong + ' salah');
+    setChipText(chips[2], d.duration);
+    setChipText(chips[3], d.best);
+    chips[3].classList.toggle('gold', s === 'perfect');
+
+    var stars = document.querySelectorAll('#stars .star');
+    Array.prototype.forEach.call(stars, function(st, i){ st.classList.toggle('on', i < d.starsOn); });
+
+    var showReview = s !== 'perfect';
+    document.getElementById('reviewSection').style.display = showReview ? '' : 'none';
+    document.getElementById('reviewHint').textContent = showReview
+      ? d.wrong + ' soal perlu dibahas'
+      : 'Tidak ada soal yang salah';
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tbtn'), function(b){
+    b.addEventListener('click', function(){ setState(b.dataset.state); });
+  });
+  setState('has-wrong');
+</script>
+</body>
+</html>
