@@ -109,17 +109,43 @@ class GameApiController extends Controller
             $seeds[] = random_int(1000, 999999);
         }
 
+        // D4 Adaptive Injection: 70% core topic (indices 0..6), 30% from weakest prior topics (indices 7..9)
+        $weakestTopics = Answer::whereHas('session', function ($query) use ($validated) {
+            $query->where('player_id', $validated['player_id']);
+        })
+            ->where('is_correct', false)
+            ->whereNotNull('misconception_label')
+            ->select('topic_code', \Illuminate\Support\Facades\DB::raw('count(*) as errors'))
+            ->groupBy('topic_code')
+            ->orderByDesc('errors')
+            ->pluck('topic_code')
+            ->all();
+
+        $topics = [];
+        for ($i = 0; $i < 7; $i++) {
+            $topics[] = $level->topic_code;
+        }
+        for ($i = 7; $i < 10; $i++) {
+            if (! empty($weakestTopics)) {
+                $topics[] = $weakestTopics[($i - 7) % count($weakestTopics)];
+            } else {
+                $topics[] = $level->topic_code;
+            }
+        }
+
         $session = GameSession::create([
             'player_id' => $validated['player_id'],
             'level_id' => $validated['level_id'],
             'status' => 'active',
             'question_seeds' => $seeds,
+            'question_topics' => $topics,
         ]);
 
         // Generate questions (WITHOUT answerIndex for server authority)
         $questions = [];
         foreach ($seeds as $idx => $seed) {
-            $q = $this->generator->generate($level->topic_code, $seed, 0);
+            $topic = $topics[$idx];
+            $q = $this->generator->generate($topic, $seed, 0);
             $questions[] = [
                 'index' => $idx,
                 'stem' => $q->stem,
@@ -163,7 +189,8 @@ class GameApiController extends Controller
         }
 
         $level = $session->level;
-        $q = $this->generator->generate($level->topic_code, $seed, 0);
+        $topicCode = $session->question_topics[$idx] ?? $level->topic_code;
+        $q = $this->generator->generate($topicCode, $seed, 0);
 
         $isCorrect = ($validated['chosen'] !== null && $validated['chosen'] === $q->answerIndex);
         $misconceptionLabel = ($validated['chosen'] !== null) ? $q->labelForChoice($validated['chosen']) : 'timeout';
@@ -175,7 +202,7 @@ class GameApiController extends Controller
             ],
             [
                 'question_seed' => $seed,
-                'topic_code' => $level->topic_code,
+                'topic_code' => $topicCode,
                 'chosen' => $validated['chosen'],
                 'is_correct' => $isCorrect,
                 'misconception_label' => $isCorrect ? null : $misconceptionLabel,

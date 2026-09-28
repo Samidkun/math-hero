@@ -28,6 +28,7 @@ export default function Play({ session_id, level, questions }: PlayProps) {
     correctIndex: null,
     misconception: null,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [loadingNext, setLoadingNext] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
@@ -36,14 +37,17 @@ export default function Play({ session_id, level, questions }: PlayProps) {
   const currentQ = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
 
+  const submitAnswerRef = useRef<(chosen: number | null) => Promise<void>>(async () => {});
+
   // Submit Answer (or timeout)
   const submitAnswer = useCallback(async (chosen: number | null) => {
-    if (answerState.submitted) return;
+    if (answerState.submitted || isSubmitting) return;
 
     if (timerRef.current) clearInterval(timerRef.current);
 
     const timeTaken = Math.min(30000, Date.now() - startTimeRef.current);
     setSelectedOption(chosen);
+    setIsSubmitting(true);
 
     try {
       const res = await fetch(`/api/sessions/${session_id}/answer`, {
@@ -76,13 +80,16 @@ export default function Play({ session_id, level, questions }: PlayProps) {
     } catch {
       alert('Gagal mengirim jawaban. Coba periksa koneksi.');
     }
-  }, [answerState.submitted, currentIndex, isLastQuestion, session_id]);
+  }, [answerState.submitted, currentIndex, isLastQuestion, isSubmitting, session_id]);
 
-  // Timer loop
+  submitAnswerRef.current = submitAnswer;
+
+  // Timer loop (only runs when question index changes!)
   useEffect(() => {
     startTimeRef.current = Date.now();
     setTimeLeft(30);
     setSelectedOption(null);
+    setIsSubmitting(false);
     setAnswerState({
       submitted: false,
       isCorrect: null,
@@ -94,7 +101,7 @@ export default function Play({ session_id, level, questions }: PlayProps) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          submitAnswer(null); // timeout
+          submitAnswerRef.current(null); // timeout
           return 0;
         }
         return prev - 1;
@@ -104,7 +111,7 @@ export default function Play({ session_id, level, questions }: PlayProps) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentIndex, submitAnswer]);
+  }, [currentIndex]);
 
   const handleNextQuestion = () => {
     if (currentIndex < questions.length - 1) {
@@ -242,8 +249,9 @@ export default function Play({ session_id, level, questions }: PlayProps) {
               return (
                 <button
                   key={idx}
+                  data-testid={`option-${idx}`}
                   type="button"
-                  disabled={answerState.submitted}
+                  disabled={answerState.submitted || isSubmitting}
                   onClick={() => submitAnswer(idx)}
                   className={`flex min-h-[48px] w-full items-center gap-3.5 rounded-2xl border-2 px-4 py-3.5 text-left transition ${btnStyle}`}
                 >
@@ -297,6 +305,7 @@ export default function Play({ session_id, level, questions }: PlayProps) {
           {answerState.submitted && isLastQuestion && (
             <div className="mt-6 border-t border-line pt-4">
               <button
+                data-testid="finish-btn"
                 type="button"
                 disabled={loadingNext}
                 onClick={handleFinish}

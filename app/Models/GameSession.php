@@ -18,12 +18,14 @@ class GameSession extends Model
         'total_time_ms',
         'abandon_reason',
         'question_seeds',
+        'question_topics',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'question_seeds' => 'array',
+        'question_topics' => 'array',
     ];
 
     public function player(): BelongsTo

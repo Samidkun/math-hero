@@ -115,4 +115,68 @@ class GameFlowTest extends TestCase
         $lvl2Prog = PlayerLevelProgress::where('player_id', $player->id)->where('level_id', $lvl2->id)->first();
         $this->assertTrue($lvl2Prog->fresh()->is_unlocked);
     }
+
+    public function test_adaptive_injection_inserts_thirty_percent_weak_topics(): void
+    {
+        $player = Player::create(['nickname' => 'Doni']);
+        $lvl1 = Level::where('grade', 4)->where('level_number', 1)->first();
+        $lvl2 = Level::where('grade', 4)->where('level_number', 2)->first();
+
+        PlayerLevelProgress::create([
+            'player_id' => $player->id,
+            'level_id' => $lvl1->id,
+            'is_unlocked' => true,
+        ]);
+        PlayerLevelProgress::create([
+            'player_id' => $player->id,
+            'level_id' => $lvl2->id,
+            'is_unlocked' => true,
+        ]);
+
+        // Prior session on level 1 where player made errors on 'grade-4/place-value-10k'
+        $oldSession = GameSession::create([
+            'player_id' => $player->id,
+            'level_id' => $lvl1->id,
+            'status' => 'completed',
+            'question_seeds' => range(1, 10),
+            'question_topics' => array_fill(0, 10, 'grade-4/place-value-10k'),
+        ]);
+
+        // 3 wrong answers with misconception labels on 'grade-4/place-value-10k'
+        for ($i = 0; $i < 3; $i++) {
+            Answer::create([
+                'game_session_id' => $oldSession->id,
+                'question_index' => $i,
+                'question_seed' => 100 + $i,
+                'topic_code' => 'grade-4/place-value-10k',
+                'chosen' => 1,
+                'is_correct' => false,
+                'misconception_label' => 'place-skip',
+                'time_taken_ms' => 4000,
+            ]);
+        }
+
+        // Now start a new session on level 2
+        $resp = $this->postJson('/api/sessions', [
+            'player_id' => $player->id,
+            'level_id' => $lvl2->id,
+        ]);
+
+        $resp->assertCreated();
+        $sessionId = $resp->json('session_id');
+        $session = GameSession::findOrFail($sessionId);
+
+        $topics = $session->question_topics;
+        $this->assertCount(10, $topics);
+
+        // Indices 0..6 must be core topic of level 2
+        for ($i = 0; $i < 7; $i++) {
+            $this->assertSame($lvl2->topic_code, $topics[$i]);
+        }
+
+        // Indices 7..9 must be adaptively injected from 'grade-4/place-value-10k'
+        for ($i = 7; $i < 10; $i++) {
+            $this->assertSame('grade-4/place-value-10k', $topics[$i]);
+        }
+    }
 }

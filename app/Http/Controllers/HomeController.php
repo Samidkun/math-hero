@@ -92,7 +92,8 @@ final class HomeController extends Controller
         $questions = [];
 
         foreach ($session->question_seeds as $idx => $seed) {
-            $q = $this->generator->generate($level->topic_code, $seed, 0);
+            $topic = $session->question_topics[$idx] ?? $level->topic_code;
+            $q = $this->generator->generate($topic, $seed, 0);
             $questions[] = [
                 'index' => $idx,
                 'stem' => $q->stem,
