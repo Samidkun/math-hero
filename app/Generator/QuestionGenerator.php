@@ -34,6 +34,7 @@ final class QuestionGenerator
             'ratio' => new ItemModels\RatioItemModel,
             'mult-2digit' => new ItemModels\MultiplicationItemModel,
             'place-value-10k' => new ItemModels\PlaceValueItemModel,
+            'area-rect' => new ItemModels\AreaItemModel,
         ];
     }
 
