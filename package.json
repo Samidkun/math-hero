@@ -7,7 +7,7 @@
         "dev": "vite"
     },
     "devDependencies": {
-        "@inertiajs/react": "^3.7.1",
+        "@inertiajs/react": "^3.8.0",
         "@playwright/test": "^1.63.0",
         "@tailwindcss/vite": "^4.0.0",
         "@types/react": "^19.3.0",
